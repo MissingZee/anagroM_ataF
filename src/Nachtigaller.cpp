@@ -46,13 +46,13 @@ RBLaser laser_left_back(6, TYPE_SHORTRANGE); //rb60
 #define RANDOM 6
 #define DANGEROUSZONE 1 //defines whether or not the robot enters the dangerous zone(0=>avoid)
 #define CAMIGNORE 0 //if 1, any information provided by the camera will be ignored
-#define TESTMODE 3 //If >0, the robot only executes what is in the beginninng of void loop
+#define TESTMODE 0 //If >0, the robot only executes what is in the beginninng of void loop
+#define FANCY 1
 #define ACCESSVARIABLE demo
 #define INDICATEFINISH 1 //If 0, the robot does not react to returning to its starting tile
 #define DEBUGLED 1 // If 1, some processes use the red, Arduino or RoCCI-Board LED for indicating stuff
 #define GETVARIABLENAME(Variable) (#Variable)
 int tempVgd[5]; //order of surrounding tiles
-int tempOrder[5]; //fancier order of surrounding tiles
 int vgd = 0; //virtual geographic direction in North, South, West and East
 int xc = 25; //x-coordinate on the map
 int yc = 25; //y-coordinate on the map
@@ -144,12 +144,6 @@ void swap(int one, int two){
   tempVgd[4]=tempVgd[one];
   tempVgd[one]=tempVgd[two];
   tempVgd[two]=tempVgd[4];
-}
-//swaps two digits of tileOrder(used only in fancyDriving())
-void fancySwap(int one, int two){
-  tempOrder[4]=tempOrder[one];
-  tempOrder[one]=tempOrder[two];
-  tempOrder[two]=tempOrder[4];
 }
 //calculates the visible tiles from the front ToF-sensor value
 int visibleTiles(){
@@ -375,14 +369,6 @@ void mapsWrite(){
   if(vgd >= 4){vgd = 0;}
   if(vgd < 0){vgd = 3;}
 }
-void fancyMapsWrite(){
-  if(vgd == NORTH){xc++;}
-  if(vgd == SOUTH){xc--;}
-  if(vgd == EAST){yc++;}
-  if(vgd == WEST){yc--;}
-  if(vgd >= 4){vgd = 0;}
-  if(vgd < 0){vgd = 3;}
-}
 //the robot turns the LED on and off for the duration of the given seconds
 void blink(int interval, int blinkTimes){
   for(int i=0;i<=blinkTimes;i++){
@@ -589,31 +575,23 @@ void fancyPlanning(){
   }
 }
 //basically lastFreeTile in a more sophisticated way and using the map created by fancyPlanning
-int fancyDriving(int preferredDirection = FRONTLEFT){
-	//set presets
-	tempOrder[0] = maps[xc+1][yc].getOrder();
-	tempOrder[1] = maps[xc][yc+1].getOrder();
-	tempOrder[2] = maps[xc-1][yc].getOrder();
-	tempOrder[3] = maps[xc][yc-1].getOrder();
-	int relativeDirection = -1;
-
-	//sort by size, smallest first
-	if(tempOrder[0]>tempOrder[1]){fancySwap(0,1);}
-  if(tempOrder[2]>tempOrder[3]){fancySwap(2,3);}
-  if(tempOrder[1]>tempOrder[2]){fancySwap(1,2);}
-  if(tempOrder[0]>tempOrder[1]){fancySwap(0,1);}
-  if(tempOrder[2]>tempOrder[3]){fancySwap(2,3);}
-  if(tempOrder[1]>tempOrder[2]){fancySwap(1,2);}
+int fancyDriving(int preferredDirection = LEFT){
+  int smallest = 100;
+  if(maps[xc+1][yc].getOrder()<smallest && !isBlack(true, NORTH) && isFree(true, NORTH)){
+    smallest=maps[xc+1][yc].getOrder();
+  }
+  if(maps[xc][yc+1].getOrder()<smallest && !isBlack(true, EAST) && isFree(true, EAST)){
+    smallest=maps[xc][yc+1].getOrder();
+  }
+  if(maps[xc-1][yc].getOrder()<smallest && !isBlack(true, SOUTH) && isFree(true, SOUTH)){
+    smallest=maps[xc-1][yc].getOrder();
+  }
+  if(maps[xc][yc-1].getOrder()<smallest && !isBlack(true, WEST) && isFree(true, WEST)){
+    smallest=maps[xc][yc-1].getOrder();
+  }
 
 	//universalise some relative map variables
-	int frontTileX;
-	int frontTileY;
-	int rightTileX;
-	int rightTileY;
-	int leftTileX;
-	int leftTileY;
-	int backTileX;
-	int backTileY;
+	int frontTileX, frontTileY, rightTileX, rightTileY, leftTileX, leftTileY, backTileX, backTileY;
 		   if(vgd==NORTH){frontTileX=xc+1; frontTileY=yc;}
 	else if(vgd==EAST) {frontTileX=xc;   frontTileY=yc+1;}
 	else if(vgd==SOUTH){frontTileX=xc-1; frontTileY=yc;}
@@ -631,20 +609,35 @@ int fancyDriving(int preferredDirection = FRONTLEFT){
 	else if(vgd==SOUTH){rightTileX=xc;   rightTileY=yc-1;}
 	else					     {rightTileX=xc+1; rightTileY=yc;}
 	
-	if(preferredDirection==FRONTLEFT){
-		for(int i=0;i<=3;i++){
-			     if(tempOrder[i]==maps[leftTileX][leftTileY].getOrder()   && isFree(false, LEFT)  && !isBlack(false, LEFT))
-				{relativeDirection=LEFT;  break;}
-			else if(tempOrder[i]==maps[frontTileX][frontTileY].getOrder() && isFree(false, FRONT) && !isBlack(false, FRONT))
-				{relativeDirection=FRONT; break;}
-			else if(tempOrder[i]==maps[rightTileX][rightTileY].getOrder() && isFree(false, RIGHT) && !isBlack(false, RIGHT))
-				{relativeDirection=RIGHT; break;}
-			else if(tempOrder[i]==maps[backTileX][backTileY].getOrder()   && isFree(false, BACK)  && !isBlack(false, BACK))
-				{relativeDirection=BACK;  break;}
-		}
+  if(preferredDirection==RANDOM){
+    int coincidence = random(1,4);
+    if(coincidence==2){coincidence=5;}
+    preferredDirection=coincidence;
 	}
-	//implement other preferred directions
-	return relativeDirection;
+	if(preferredDirection==LEFT){
+         if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
+    else if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
+    else if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
+    else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
+	}
+  if(preferredDirection==RIGHT){
+         if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
+    else if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
+    else if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
+    else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
+	}
+  if(preferredDirection==FRONTLEFT){
+         if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
+    else if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
+    else if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
+    else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
+	}
+  if(preferredDirection==FRONTRIGHT){
+         if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
+    else if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
+    else if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
+    else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
+	}
 }
 
 //third order spells:
@@ -686,6 +679,7 @@ void setup() {
     oled.print(("Hello World!"));
   } while ( oled.nextPage() );
   attachInterrupt(BUTTONMIDDLE, pause, FALLING);
+  fancyPlanning();
 }
 //prints different values to the OLED display, also whilst driving
 void oledValues(int modeAuto, String status){
@@ -857,6 +851,15 @@ void oledValues(int modeAuto, String status){
       oled.print("ERROR!!!");
     } while(oled.nextPage());
   }
+}
+void fancyMapsWrite(){
+  if(vgd == NORTH){xc++;}
+  if(vgd == SOUTH){xc--;}
+  if(vgd == EAST){yc++;}
+  if(vgd == WEST){yc--;}
+  if(vgd >= 4){vgd = 0;}
+  if(vgd < 0){vgd = 3;}
+  fancyPlanning();
 }
 
 //fourth order spells:
@@ -1347,6 +1350,23 @@ void Drive(int mode){
     }
   }
 }
+//performs the fanciest of all driving algorithms made by the one and only Fabian
+void fancyDrive(int mode){
+  int fancyResult = fancyDriving(mode);
+  if(fancyResult==FRONT){
+    runtile();
+  }
+  else if(fancyResult==LEFT){
+    turnrun(-TURN);
+  }
+  else if(fancyResult==RIGHT){
+    turnrun();
+  }
+  else if(fancyResult==BACK){
+    turn90();
+    turnrun();
+  }
+}
 
 //eigth order spells:
 
@@ -1436,5 +1456,5 @@ void loop(){
     maps[xc][yc].setFloorColour('c');
   }
 //Driving:
-  Drive(4);
+  fancyDrive(LEFT);
 }
