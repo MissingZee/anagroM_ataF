@@ -577,16 +577,16 @@ void fancyPlanning(){
 //basically lastFreeTile in a more sophisticated way and using the map created by fancyPlanning
 int fancyDriving(int preferredDirection = LEFT){
   int smallest = 100;
-  if(maps[xc+1][yc].getOrder()<smallest && !isBlack(true, NORTH) && isFree(true, NORTH)){
+  if(maps[xc+1][yc].getOrder()<smallest && maps[xc+1][yc].getOrder()>0 && !isBlack(true, NORTH) && isFree(true, NORTH)){
     smallest=maps[xc+1][yc].getOrder();
   }
-  if(maps[xc][yc+1].getOrder()<smallest && !isBlack(true, EAST) && isFree(true, EAST)){
+  if(maps[xc][yc+1].getOrder()<smallest && maps[xc][yc+1].getOrder()>0 && !isBlack(true, EAST) && isFree(true, EAST)){
     smallest=maps[xc][yc+1].getOrder();
   }
-  if(maps[xc-1][yc].getOrder()<smallest && !isBlack(true, SOUTH) && isFree(true, SOUTH)){
+  if(maps[xc-1][yc].getOrder()<smallest && maps[xc-1][yc].getOrder()>0 && !isBlack(true, SOUTH) && isFree(true, SOUTH)){
     smallest=maps[xc-1][yc].getOrder();
   }
-  if(maps[xc][yc-1].getOrder()<smallest && !isBlack(true, WEST) && isFree(true, WEST)){
+  if(maps[xc][yc-1].getOrder()<smallest && maps[xc][yc-1].getOrder()>0 && !isBlack(true, WEST) && isFree(true, WEST)){
     smallest=maps[xc][yc-1].getOrder();
   }
 
