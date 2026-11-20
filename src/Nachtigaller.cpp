@@ -610,34 +610,38 @@ int fancyDriving(int preferredDirection = LEFT){
 	else					     {rightTileX=xc+1; rightTileY=yc;}
 	
   if(preferredDirection==RANDOM){
-    int coincidence = random(1,4);
-    if(coincidence==2){coincidence=5;}
+    int coincidence = random(RIGHT,FRONTRIGHT);
+    if(coincidence==BACK){coincidence=FRONTLEFT;}
     preferredDirection=coincidence;
 	}
+
 	if(preferredDirection==LEFT){
          if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
     else if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
     else if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
     else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
 	}
-  if(preferredDirection==RIGHT){
+  else if(preferredDirection==RIGHT){
          if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
     else if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
     else if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
     else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
 	}
-  if(preferredDirection==FRONTLEFT){
+  else if(preferredDirection==FRONTLEFT){
          if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
     else if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
     else if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
     else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
 	}
-  if(preferredDirection==FRONTRIGHT){
+  else if(preferredDirection==FRONTRIGHT){
          if(smallest==maps[frontTileX][frontTileY].getOrder()){return FRONT;}
     else if(smallest==maps[rightTileX][rightTileY].getOrder()){return RIGHT;}
     else if(smallest==maps[leftTileX][leftTileY].getOrder())  {return LEFT;}
     else if(smallest==maps[backTileX][backTileY].getOrder())  {return BACK;}
 	}
+  else{
+    return 10; //shouldn't happen
+  }
 }
 
 //third order spells:
