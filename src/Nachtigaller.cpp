@@ -1023,7 +1023,12 @@ void runtile(int speed = RUN){
     if(isPaused){break;}
   }
   stop(); //stops any motor movement
-  mapsWrite(); //writes its new position to the map
+	//writes its new position to the map
+	#if FANCY==1
+		fancyMapsWrite();
+	#else
+  	mapsWrite();
+	#endif
   compassAlign();
   realign(); //realigns the robot to a side wall (if there is one)
   if(xc==25&&yc==25 && INDICATEFINISH==1){ //if the robot is on its starting tile, it indicates that
@@ -1032,7 +1037,7 @@ void runtile(int speed = RUN){
   }
   didDriveBefore=1;
 }
-//the robot turns itself around 90 degrees
+//the robot turns itself about 90 degrees
 void turn90(int speed = TURN){
   double tol = 0.5;
   int direction = compass.getHeading();
